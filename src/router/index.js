@@ -1,23 +1,58 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+// 路由配置 页面
+import { useRoute, createRouter, createWebHashHistory } from 'vue-router';
+
+import baseRouters from './modules/base';
+import componentsRouters from './modules/components';
+import othersRouters from './modules/others';
+
+// 关于单层路由，meta 中设置 { single: true } 即可为单层路由，{ hidden: true } 即可在侧边栏隐藏该路由
+
+// 存放动态路由
+export const asyncRouterList = [...baseRouters, ...componentsRouters, ...othersRouters];
+
+// 存放固定的路由
+const defaultRouterList = [
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/pages/login/index.vue'),
+  },
+  {
+    path: '/',
+    redirect: '/main/index',
+    component: () => import('@/pages/layouts/index.vue'),
+  },
+  {
+    path: '/:w+',
+    name: '404Page',
+    redirect: '/result/404',
+  },
+];
+
+export const allRoutes = [...defaultRouterList, ...asyncRouterList];
+
+export const getActive = (maxLevel = 2) => {
+  const route = useRoute();
+  if (!route.path) {
+    return '';
+  }
+  return route.path
+    .split('/')
+    .filter((_item, index) => index <= maxLevel && index > 0)
+    .map((item) => `/${item}`)
+    .join('');
+};
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-  ],
-})
+  history: createWebHashHistory(),
+  routes: allRoutes,
+  scrollBehavior() {
+    return {
+      el: '#app',
+      top: 0,
+      behavior: 'smooth',
+    };
+  },
+});
 
-export default router
+export default router;
